@@ -11,3 +11,13 @@ wheels/
 
 # Environment variables file
 .env
+
+# VSCode settings
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/*.code-workspace
+
+# .txt files
+*.txt
