@@ -64,6 +64,7 @@
         .join(): Join a list of strings together with a separator
     """
 import os
+import subprocess
 
 def get_files_info(working_directory, directory="."):
     """Get information about files in a directory.
@@ -99,6 +100,101 @@ def get_files_info(working_directory, directory="."):
 
     except Exception as e:
         return f"Error: {e}"
+
+
+def write_file(working_directory, file_path, content):
+    """Write content to a file.
+
+    Args:
+        working_directory (str): The root directory to restrict file access.
+        file_path (str): The path to the file to write to.
+        content (str): The content to write to the file.
+    """
+    try:
+        # Create the full path by joining working_directory and file_path
+        full_path = os.path.abspath(os.path.join(working_directory, file_path))
+        working_directory_abs = os.path.abspath(working_directory)
+
+        # Check if the full path is within the working directory
+        if not full_path.startswith(working_directory_abs):
+            return f'Error: Cannot write to "{file_path}" as it is outside the permitted working directory'
+
+        # Create directories if they don't exist
+        directory = os.path.dirname(full_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # Write the content to the file
+        with open(full_path, "w") as f:
+            f.write(content)
+
+        return f'Successfully wrote to "{file_path}" ({len(content)} characters written)'
+
+    except Exception as e:
+        return f"Error: {e}"
+
+
+def run_python_file(working_directory, file_path, args=None):
+    """Run a Python file with security restrictions.
+
+    Args:
+        working_directory (str): The root directory to restrict file access.
+        file_path (str): The path to the Python file to execute.
+        args (list, optional): Additional arguments to pass to the Python file.
+    """
+    if args is None:
+        args = []
+        
+    try:
+        # Create the full path by joining working_directory and file_path
+        full_path = os.path.abspath(os.path.join(working_directory, file_path))
+        working_directory_abs = os.path.abspath(working_directory)
+
+        # Check if the full path is within the working directory
+        if not full_path.startswith(working_directory_abs):
+            return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
+
+        # Check if the file exists
+        if not os.path.exists(full_path):
+            return f'Error: File "{file_path}" not found.'
+
+        # Check if it's a Python file
+        if not file_path.endswith('.py'):
+            return f'Error: "{file_path}" is not a Python file.'
+
+        # Prepare the command
+        cmd = ['python', full_path] + args
+
+        # Execute the Python file
+        completed_process = subprocess.run(
+            cmd,
+            cwd=working_directory_abs,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        # Format the output
+        output_lines = []
+        
+        if completed_process.stdout:
+            output_lines.append(f"STDOUT:\n{completed_process.stdout}")
+        
+        if completed_process.stderr:
+            output_lines.append(f"STDERR:\n{completed_process.stderr}")
+            
+        if completed_process.returncode != 0:
+            output_lines.append(f"Process exited with code {completed_process.returncode}")
+
+        if not output_lines:
+            return "No output produced."
+            
+        return "\n".join(output_lines)
+
+    except subprocess.TimeoutExpired:
+        return "Error: executing Python file: Process timed out after 30 seconds"
+    except Exception as e:
+        return f"Error: executing Python file: {e}"
 
 """
 If the file_path is outside the working_directory, return a string with an error:
