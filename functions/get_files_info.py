@@ -341,3 +341,111 @@ def get_file_content(working_directory, file_path):
 
     except Exception as e:
         return f"Error: {e}"
+    
+"""
+Create a new function that will handle the abstract task of calling one of our four functions. 
+
+function_call_part is a types.FunctionCall that most importantly has:
+
+A .name property (the name of the function, a string)
+A .args property (a dictionary of named arguments to the function)
+If verbose is specified, print the function name and args:
+
+print(f"Calling function: {function_call_part.name}({function_call_part.args})")
+
+Otherwise, just print the name:
+
+print(f" - Calling function: {function_call_part.name}")
+
+Based on the name, actually call the function and capture the result.
+
+Be sure to manually add the "working_directory" argument to the dictionary of keyword arguments, 
+because the LLM doesn't control that one. The working directory should be ./calculator.
+
+The syntax to pass a dictionary into a function using keyword arguments is some_function(**some_args)
+
+I used a dictionary of function name (string) -> function to accomplish this.
+
+If the function name is invalid, return a types.Content that explains the error:
+
+return types.Content(
+    role="tool",
+    parts=[
+        types.Part.from_function_response(
+            name=function_name,
+            response={"error": f"Unknown function: {function_name}"},
+        )
+    ],
+)
+
+Return types.Content with a from_function_response describing the result of the function call:
+
+return types.Content(
+    role="tool",
+    parts=[
+        types.Part.from_function_response(
+            name=function_name,
+            response={"result": function_result},
+        )
+    ],
+)
+
+**Note that from_function_response requires the response to be a dictionary, so we just shove the string result into a "result" field.**
+"""
+def call_function(function_call_part, verbose=False):
+    """Call a function based on the function call part.
+
+    Args:
+        function_call_part (types.FunctionCall): The function call part containing the name and args.
+        verbose (bool, optional): Whether to print verbose output. Defaults to False.
+    """
+    # Define the working directory - go up one level from functions/ to the root, then to calculator/
+    working_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "calculator")
+
+    # Map function names to actual functions
+    function_map = {
+        "get_files_info": get_files_info,
+        "get_file_content": get_file_content,
+        "write_file": write_file,
+        "run_python_file": run_python_file,
+    }
+
+    function_name = function_call_part.name
+    function_args = function_call_part.args if function_call_part.args else {}
+
+    if verbose:
+        print(f"Calling function: {function_name}({function_args})")
+    else:
+        print(f" - Calling function: {function_name}")
+
+    # Add the working_directory argument
+    function_args["working_directory"] = working_directory
+
+    # Check if the function name is valid
+    if function_name not in function_map:
+        return types.Content(
+            role="tool",
+            parts=[
+                types.Part.from_function_response(
+                    name=function_name,
+                    response={"error": f"Unknown function: {function_name}"},
+                )
+            ],
+        )
+
+    # Call the function and capture the result
+    try:
+        function_result = function_map[function_name](**function_args)
+    except Exception as e:
+        function_result = f"Error calling function {function_name}: {e}"
+
+    # Return the result as types.Content
+    return types.Content(
+        role="tool",
+        parts=[
+            types.Part.from_function_response(
+                name=function_name,
+                response={"result": function_result},
+            )
+        ],
+    )

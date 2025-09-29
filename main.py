@@ -7,6 +7,7 @@ from functions.get_files_info import schema_get_files_info
 from functions.get_files_info import schema_write_file
 from functions.get_files_info import schema_get_file_content
 from functions.get_files_info import schema_run_python_file
+from functions.get_files_info import call_function
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -41,41 +42,59 @@ def main():
         schema_run_python_file
     ]
 )
-    # Make the API call to generate content with the provided prompt and available functions
+    # Check if --verbose flag is provided
+    verbose = "--verbose" in sys.argv
+    user_prompt = " ".join(arg for arg in sys.argv[1:] if arg != "--verbose")
+    
+    if verbose:
+        print(f"User prompt: {user_prompt}\n")
+    
+    # Make the initial API call to generate content
     response = client.models.generate_content(
         model="gemini-2.0-flash-001",
-        contents=sys.argv[1:],
+        contents=[user_prompt],
         config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),
     )
-
-    # If the --verbose flag is provided, the output should include:
-    # 1. The user's prompt ("User prompt: {user_prompt}")
-    # 2. The number of prompt tokens on the each iteration ("Prompt tokens: {prompt_tokens}")
-    # 3. The number of response tokens on each iteration ("Response tokens: {response_tokens}")
-    if "--verbose" in sys.argv:
-        user_prompt = " ".join(arg for arg in sys.argv[1:] if arg != "--verbose")
-        print(f"User prompt: {user_prompt}\n")
+    
+    # Check if the response contains function calls
+    if (response.candidates and response.candidates[0].content and 
+        response.candidates[0].content.parts):
+        
+        has_function_calls = False
+        function_results = []
+        
+        for part in response.candidates[0].content.parts:
+            if hasattr(part, 'function_call') and part.function_call:
+                has_function_calls = True
+                # Call the function and get result
+                function_result = call_function(part.function_call, verbose)
+                function_results.append(function_result)
+        
+        if has_function_calls:
+            # Create a new conversation with the function results
+            conversation = [
+                user_prompt,
+                response.candidates[0].content
+            ] + function_results
+            
+            # Get the final response after function calls
+            final_response = client.models.generate_content(
+                model="gemini-2.0-flash-001",
+                contents=conversation,
+                config=types.GenerateContentConfig(system_instruction=system_prompt),
+            )
+            response = final_response
+    
+    # Print final response and usage metadata
+    if verbose:
         print(response.text)
         if response.usage_metadata:
             print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
             print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         else:
             print("Usage metadata not available")
-            
     else:
-        # Check if the response contains function calls
-        if hasattr(response, 'candidates') and response.candidates:
-            candidate = response.candidates[0]
-            if hasattr(candidate, 'content') and candidate.content and candidate.content.parts:
-                for part in candidate.content.parts:
-                    if hasattr(part, 'function_call') and part.function_call:
-                        function_call = part.function_call
-                        print(f"Calling function: {function_call.name}({function_call.args})")
-                    elif hasattr(part, 'text') and part.text:
-                        print(part.text)
-        else:
-            # Fallback to the original text output
-            print(response.text)
+        print(response.text)
     
         # if response.usage_metadata:
         #     print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
