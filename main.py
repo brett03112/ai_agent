@@ -4,9 +4,10 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-from prompts import system_prompt
 from call_function import call_function, available_functions
 
+from config import MAX_ITERS
+from prompts import system_prompt
 
 def main():
     # Load environment variables from .env file
@@ -36,8 +37,24 @@ def main():
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
-    # Call the generate_content function
-    generate_content(client, messages, verbose)
+    
+    # Main interaction loop
+    iters = 0
+    while True:
+        iters += 1
+        if iters > MAX_ITERS:
+            print(f"Maximum iterations ({MAX_ITERS}) reached.")
+            sys.exit(1)
+
+        try:
+            # Generate content and handle function calls
+            final_response = generate_content(client, messages, verbose)
+            if final_response:
+                print("Final response:")
+                print(final_response)
+                break
+        except Exception as e:
+            print(f"Error in generate_content: {e}")
 
 
 def generate_content(client, messages, verbose):
@@ -63,12 +80,14 @@ def generate_content(client, messages, verbose):
         ),
     )
     # Check for errors in the response
-    if verbose:
-        print("Prompt tokens:", response.usage_metadata.prompt_token_count)
-        print("Response tokens:", response.usage_metadata.candidates_token_count)
+    if response.candidates:
+        for candidate in response.candidates:
+            function_call_content = candidate.content
+            messages.append(function_call_content)
 
     if not response.function_calls:
         return response.text
+    
     # Handle function calls
     function_responses = []
     for function_call_part in response.function_calls:
