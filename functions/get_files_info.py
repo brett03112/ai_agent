@@ -83,6 +83,63 @@ schema_get_files_info = types.FunctionDeclaration(
     ),
 )
 
+# Define the function schema for get_file_content
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description="Reads and returns the content of a specified file, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the file to read, relative to the working directory.",
+            ),
+        },
+        required=["file_path"],
+    ),
+)
+
+# Define the function schema for write_file
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="Writes content to a specified file, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the file to write to, relative to the working directory.",
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description="The content to write to the file.",
+            ),
+        },
+        required=["file_path", "content"],
+    ),
+)
+
+# Define the function schema for run_python_file
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Executes a specified Python file with optional arguments, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the Python file to execute, relative to the working directory.",
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                items=types.Schema(type=types.Type.STRING),
+                description="A list of additional arguments to pass to the Python file.",
+            ),
+        },
+        required=["file_path"],
+    ),
+)
+
 def get_files_info(working_directory, directory="."):
     """Get information about files in a directory.
 
