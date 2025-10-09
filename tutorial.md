@@ -38,6 +38,8 @@ Beyond just building a functional agent, this project will help you:
 - Develop multi-directory Python projects with proper package structure
 - Explore functional programming patterns in Python
 
+[↑ Back to Table of Contents](#table-of-contents)
+
 ---
 
 ## Understanding AI Agents vs. Chatbots {#agents-vs-chatbots}
@@ -65,6 +67,8 @@ The core of any agent is its agentic loop, which follows this pattern:
 7. Provide a final response to the user
 
 This loop allows the agent to be self-correcting and adaptive. If its first approach doesn't work, it can try something different. If it encounters an error, it can analyze the error message and adjust its strategy.
+
+[↑ Back to Table of Contents](#table-of-contents)
 
 ---
 
@@ -111,6 +115,8 @@ ai_agent/
 └── pyproject.toml            # Project dependencies
 ```
 
+[↑ Back to Table of Contents](#table-of-contents)
+
 ---
 
 ## Prerequisites and Setup {#setup}
@@ -148,6 +154,8 @@ In your Python code, you'll load this environment variable using a library like 
 ### Initial Project Setup
 
 Clone the repository and navigate into the project directory. Create your `.env` file as described above. Then run `uv sync` to install all dependencies and set up the virtual environment. UV will create a `.venv` directory containing an isolated Python environment with all the required packages. You don't need to manually activate this environment; UV commands automatically use it.
+
+[↑ Back to Table of Contents](#table-of-contents)
 
 ---
 
@@ -200,6 +208,8 @@ When you configure the model, you provide schemas that describe available functi
 Your code then detects this function call, executes the actual Python function with the specified parameters, and sends the result back to the model as a new message in the conversation. The model can then use that information to continue its reasoning or make additional function calls as needed.
 
 This is transformative because it means the LLM isn't limited to its training data. It can access real-time information, interact with external systems, and verify its own work by executing code and seeing the actual results.
+
+[↑ Back to Table of Contents](#table-of-contents)
 
 ---
 
@@ -298,6 +308,8 @@ A good system prompt for this agent might include instructions like: "You are a 
 
 The system prompt would also explain what each function does and when to use it, although the function schemas themselves provide much of this information. The key is to give the model enough context to make intelligent decisions about which tools to use and in what order.
 
+[↑ Back to Table of Contents](#table-of-contents)
+
 ---
 
 ## Security Considerations {#security}
@@ -347,6 +359,8 @@ The 10,000 character limit on file reading prevents token budget overruns but al
 
 Notice how we implement multiple layers of security rather than relying on any single check. Even if one security measure failed, others would still provide protection. This "defense in depth" approach is a best practice in security engineering.
 
+[↑ Back to Table of Contents](#table-of-contents)
+
 ---
 
 ## Testing and Debugging {#testing}
@@ -395,6 +409,8 @@ This usually means the agent is trying to access files outside the working direc
 **Issue: Agent makes wrong decisions**
 Sometimes the model will make suboptimal choices, like reading all files before running tests when it should run tests first to see what fails. This is where prompt engineering becomes important. You can guide the agent by being more specific in your initial prompt: "First run the tests to see what fails, then investigate the failing tests."
 
+[↑ Back to Table of Contents](#table-of-contents)
+
 ---
 
 ## Advanced Topics and Extensions {#advanced}
@@ -429,6 +445,8 @@ For production use, you'd likely want to add approval steps before the agent exe
 
 While this agent focuses on Python, the same principles apply to other languages. You'd need to implement appropriate execution functions for each language (with their own security considerations) and train the model to understand the conventions of those languages through your system prompt and examples.
 
+[↑ Back to Table of Contents](#table-of-contents)
+
 ---
 
 ## Conclusion
@@ -438,3 +456,5 @@ Building this AI agent from scratch provides deep insights into how modern AI-po
 The principles you've learned here extend far beyond this specific project. Function calling is a general technique applicable to any task where you want to augment an LLM with external capabilities. The agentic loop pattern works for any iterative problem-solving scenario. And the security considerations apply anytime you're building systems that interact with the real world based on AI decisions.
 
 As you continue exploring, consider how you might apply these concepts to other domains. Could you build an agent that interacts with databases? One that controls web browsers? One that manages cloud infrastructure? The possibilities are vast, and you now have the foundational knowledge to explore them.
+
+[↑ Back to Table of Contents](#table-of-contents)
